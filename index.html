@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prácticas</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icono-180.png">
+<link rel="icon" href="icono-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Prácticas">
+<meta name="theme-color" content="#b91c1c">
+<script>
+  // Dirección de la app (programa de Google). Si cambia, solo hay que cambiarla aquí.
+  var APP = "https://script.google.com/macros/s/AKfycbxt4jty_VyTMWPDEZqn6YeqZDQ8mqUHIQAdEOfPxo6e1Z-ltxuT__KxGV8llBiEkzdg/exec";
+  var instalada = window.navigator.standalone === true ||
+    (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
+    /[?&]app=1/.test(location.search);
+  if (instalada) location.replace(APP);
+</script>
+<style>
+  :root { --fondo: #f3f4f6; --tarjeta: #fff; --texto: #1f2937; --suave: #6b7280; --rojo: #b91c1c; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fondo: #111827; --tarjeta: #1f2937; --texto: #f3f4f6; --suave: #9ca3af; --rojo: #ef4444; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fondo); color: var(--texto);
+         font: 17px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 480px; margin: 0 auto; padding: calc(32px + env(safe-area-inset-top)) 16px 40px; text-align: center; }
+  img { width: 120px; height: 120px; border-radius: 27px; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+  h1 { margin: 16px 0 4px; font-size: 28px; }
+  p.sub { margin: 0 0 24px; color: var(--suave); }
+  a.boton { display: block; background: var(--rojo); color: #fff; text-decoration: none; font-weight: 600;
+            padding: 15px; border-radius: 14px; font-size: 18px; }
+  .pasos { text-align: left; background: var(--tarjeta); border-radius: 14px; padding: 14px 18px; margin-top: 22px; }
+  .pasos h2 { font-size: 16px; margin: 0 0 6px; }
+  .pasos ol { margin: 0 0 10px; padding-left: 20px; }
+  .pasos li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<main>
+  <img src="icono-512.png" alt="">
+  <h1>Prácticas</h1>
+  <p class="sub">Formularios de prácticas desde el móvil</p>
+  <a class="boton" id="abrir" href="#">Abrir la app</a>
+  <div class="pasos">
+    <h2>Ponerla en la pantalla de inicio</h2>
+    <ol>
+      <li><b>iPhone:</b> en Safari, pulsa Compartir y luego «Añadir a pantalla de inicio».</li>
+      <li><b>Android:</b> en Chrome, abre el menú ⋮ y pulsa «Añadir a pantalla de inicio» (o «Instalar app»).</li>
+    </ol>
+    <h2>La primera vez</h2>
+    <ol><li>Te pedirá el código del grupo. Pídeselo a tu Jefe de Guardia.</li></ol>
+  </div>
+</main>
+<script>document.getElementById("abrir").href = APP;</script>
+</body>
+</html>
