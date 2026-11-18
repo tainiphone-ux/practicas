@@ -17,7 +17,6 @@
   var instalada = window.navigator.standalone === true ||
     (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) ||
     /[?&]app=1/.test(location.search);
-  if (instalada) location.replace(APP);
 </script>
 <style>
   :root { --fondo: #f3f4f6; --tarjeta: #fff; --texto: #1f2937; --suave: #6b7280; --rojo: #b91c1c; }
@@ -37,6 +36,10 @@
   .pasos h2 { font-size: 16px; margin: 0 0 6px; }
   .pasos ol { margin: 0 0 10px; padding-left: 20px; }
   .pasos li { margin: 4px 0; }
+  #marco { position: fixed; inset: 0; padding-top: env(safe-area-inset-top); background: #b91c1c; }
+  #marco iframe { width: 100%; height: 100%; border: 0; background: #f3f4f6; display: block; }
+  #fuera { position: fixed; right: 8px; bottom: calc(6px + env(safe-area-inset-bottom)); font-size: 11px;
+           color: #6b7280; background: rgba(255,255,255,.85); padding: 3px 8px; border-radius: 8px; text-decoration: none; }
 </style>
 </head>
 <body>
@@ -55,6 +58,29 @@
     <ol><li>Te pedirá tu código personal. Pídeselo a Valentín.</li></ol>
   </div>
 </main>
-<script>document.getElementById("abrir").href = APP;</script>
+<div id="marco" hidden><iframe id="app" title="Prácticas" allow="camera; clipboard-write"></iframe>
+  <a id="fuera" href="#">¿No carga? Ábrela aquí</a></div>
+<script>
+  // Recordar el código: la app (dentro de Google) pide y guarda el código aquí, en la memoria
+  // de la app instalada, que no se borra (la de Google, dentro del iPhone, sí se borra).
+  var CLAVE = "practicas_codigo";
+  function leeCodigo() { try { return localStorage.getItem(CLAVE) || ""; } catch (e) { return ""; } }
+  function guardaCodigo(c) { try { if (c) localStorage.setItem(CLAVE, c); else localStorage.removeItem(CLAVE); } catch (e) {} }
+  window.addEventListener("message", function (e) {
+    if (!/^https:\/\/([a-z0-9-]+\.)*(googleusercontent\.com|script\.google\.com)$/.test(e.origin)) return;
+    var d = e.data || {};
+    if (d.tipo === "practicas-pide-codigo" && e.source) e.source.postMessage({ tipo: "practicas-codigo", codigo: leeCodigo() }, e.origin);
+    if (d.tipo === "practicas-guarda-codigo") guardaCodigo(String(d.codigo || ""));
+    if (d.tipo === "practicas-borra-codigo") guardaCodigo("");
+  });
+  function abrirDentro() {
+    document.querySelector("main").hidden = true;
+    document.getElementById("marco").hidden = false;
+    document.getElementById("app").src = APP;
+  }
+  document.getElementById("fuera").href = APP;
+  document.getElementById("abrir").addEventListener("click", function (ev) { ev.preventDefault(); abrirDentro(); });
+  if (instalada) abrirDentro();
+</script>
 </body>
 </html>
