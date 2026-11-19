@@ -1,6 +1,6 @@
 {
- "name": "Prácticas",
- "short_name": "Prácticas",
+ "name": "Formulario de prácticas",
+ "short_name": "Formulario de prácticas",
  "start_url": "./?app=1",
  "scope": "./",
  "display": "standalone",
