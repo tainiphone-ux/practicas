@@ -88,6 +88,7 @@
     if (d.tipo === "practicas-pide-codigo" && e.source) e.source.postMessage({ tipo: "practicas-codigo", codigo: leeCodigo() }, e.origin);
     if (d.tipo === "practicas-guarda-codigo") guardaCodigo(String(d.codigo || ""));
     if (d.tipo === "practicas-borra-codigo") guardaCodigo("");
+    if (d.tipo === "practicas-recolocar") recolocar();
     if (d.tipo === "practicas-archivo" && d.datos) mostrarArchivo(String(d.nombre || "documento.docx"), String(d.mime || ""), d.datos);
   });
   // 21-11-2026: la app (dentro de Google) no puede compartir ni descargar; manda aquí el Word.
@@ -115,6 +116,21 @@
   // 21-11-2026: con la app dentro, esta página no se puede mover. Si se movía (el iPhone la
   // desplazaba al moverse la app), los toques caían más abajo de donde tocaba el dedo.
   function aSuSitio() { if (window.scrollX || window.scrollY) window.scrollTo(0, 0); }
+  // 21-11-2026: al volver de la cámara o la fototeca, el iPhone deja los toques de la app de dentro
+  // desplazados (había que tocar por encima del botón). Cambiar un instante el tamaño del marco le
+  // obliga a recalcular dónde está cada botón. Lo pide la app («practicas-recolocar») y se hace también
+  // al abrir, al volver a la app y al girar el móvil.
+  var recolocando = 0;
+  function recolocar() {
+    var f = document.getElementById("app");
+    if (!f || document.getElementById("marco").hidden) return;
+    clearTimeout(recolocando);
+    aSuSitio();
+    f.style.height = "calc(100% - 1px)";
+    recolocando = setTimeout(function () { f.style.height = "100%"; aSuSitio(); }, 80);
+  }
+  ["focus", "pageshow", "resize", "orientationchange"].forEach(function (ev) { window.addEventListener(ev, function () { setTimeout(recolocar, 250); }); });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) setTimeout(recolocar, 250); });
   function abrirDentro() {
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
@@ -123,6 +139,7 @@
     window.addEventListener("resize", aSuSitio);
     if (window.visualViewport) { window.visualViewport.addEventListener("resize", aSuSitio); window.visualViewport.addEventListener("scroll", aSuSitio); }
     document.querySelector("main").hidden = true;
+    document.getElementById("app").addEventListener("load", function () { [800, 2500, 6000].forEach(function (t) { setTimeout(recolocar, t); }); });
     document.getElementById("marco").hidden = false;
     document.getElementById("app").src = APP;
   }
