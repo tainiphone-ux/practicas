@@ -1,6 +1,6 @@
 {
- "name": "Formulario de prácticas",
- "short_name": "Formulario de prácticas",
+ "name": "Panel BT",
+ "short_name": "Panel BT",
  "start_url": "./?app=1",
  "scope": "./",
  "display": "standalone",
