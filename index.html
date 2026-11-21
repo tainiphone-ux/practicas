@@ -38,6 +38,16 @@
   .pasos li { margin: 4px 0; }
   #marco { position: fixed; inset: 0; padding-top: env(safe-area-inset-top); background: #b91c1c; }
   #marco iframe { width: 100%; height: 100%; border: 0; background: #f3f4f6; display: block; }
+  /* 21-11-2026: el Word que hace la app (Horas Extras / Cuadrante) se comparte desde aquí */
+  #archivo { position: fixed; left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 5;
+             background: #fff; color: #1f2937; border-radius: 16px; padding: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.35);
+             max-width: 480px; margin: 0 auto; }
+  #archivo p { margin: 0 24px 8px 0; font-size: 15px; word-break: break-word; }
+  #archivo button, #archivo a.desc { display: block; width: 100%; border: 0; border-radius: 12px; padding: 13px; font-size: 17px;
+             font-weight: 600; text-align: center; text-decoration: none; margin-top: 6px; cursor: pointer; }
+  #archivo .compartir { background: #b91c1c; color: #fff; }
+  #archivo a.desc { background: transparent; color: #b91c1c; border: 2px solid #b91c1c; }
+  #archivo .cerrar { position: absolute; top: 6px; right: 6px; width: auto; background: none; color: #6b7280; padding: 4px 10px; margin: 0; font-size: 20px; }
   #fuera { position: fixed; right: 8px; bottom: calc(6px + env(safe-area-inset-bottom)); font-size: 11px;
            color: #6b7280; background: rgba(255,255,255,.85); padding: 3px 8px; border-radius: 8px; text-decoration: none; }
 </style>
@@ -58,8 +68,14 @@
     <ol><li>Te pedirá tu código personal. Pídeselo a Valentín.</li></ol>
   </div>
 </main>
-<div id="marco" hidden><iframe id="app" title="Formulario de prácticas" allow="camera; clipboard-write"></iframe>
-  <a id="fuera" href="#">¿No carga? Ábrela aquí</a></div>
+<div id="marco" hidden><iframe id="app" title="Formulario de prácticas" allow="camera; clipboard-write; web-share"></iframe>
+  <a id="fuera" href="#">¿No carga? Ábrela aquí</a>
+  <div id="archivo" hidden>
+    <button class="cerrar" id="archivo-cerrar" type="button" aria-label="Cerrar">✕</button>
+    <p>📄 <b id="archivo-nombre"></b></p>
+    <button class="compartir" id="archivo-compartir" type="button">📤 Compartir o guardar</button>
+    <a class="desc" id="archivo-bajar" href="#" download>⬇️ Descargar</a>
+  </div></div>
 <script>
   // Recordar el código: la app (dentro de Google) pide y guarda el código aquí, en la memoria
   // de la app instalada, que no se borra (la de Google, dentro del iPhone, sí se borra).
@@ -72,6 +88,29 @@
     if (d.tipo === "practicas-pide-codigo" && e.source) e.source.postMessage({ tipo: "practicas-codigo", codigo: leeCodigo() }, e.origin);
     if (d.tipo === "practicas-guarda-codigo") guardaCodigo(String(d.codigo || ""));
     if (d.tipo === "practicas-borra-codigo") guardaCodigo("");
+    if (d.tipo === "practicas-archivo" && d.datos) mostrarArchivo(String(d.nombre || "documento.docx"), String(d.mime || ""), d.datos);
+  });
+  // 21-11-2026: la app (dentro de Google) no puede compartir ni descargar; manda aquí el Word.
+  var archivoActual = null, urlActual = "";
+  function mostrarArchivo(nombre, mime, datos) {
+    archivoActual = new File([datos], nombre, { type: mime || "application/octet-stream" });
+    if (urlActual) URL.revokeObjectURL(urlActual);
+    urlActual = URL.createObjectURL(archivoActual);
+    document.getElementById("archivo-nombre").textContent = nombre;
+    var bajar = document.getElementById("archivo-bajar");
+    bajar.href = urlActual; bajar.download = nombre;
+    var puede = !!(navigator.canShare && navigator.canShare({ files: [archivoActual] }));
+    document.getElementById("archivo-compartir").hidden = !puede;
+    document.getElementById("archivo").hidden = false;
+  }
+  document.getElementById("archivo-compartir").addEventListener("click", function () {
+    if (!archivoActual) return;
+    navigator.share({ files: [archivoActual], title: archivoActual.name }).catch(function (e) {
+      if (e && e.name !== "AbortError") alert("No se ha podido compartir. Prueba con «Descargar».");
+    });
+  });
+  document.getElementById("archivo-cerrar").addEventListener("click", function () {
+    document.getElementById("archivo").hidden = true;
   });
   function abrirDentro() {
     document.querySelector("main").hidden = true;
