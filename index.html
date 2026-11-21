@@ -112,7 +112,16 @@
   document.getElementById("archivo-cerrar").addEventListener("click", function () {
     document.getElementById("archivo").hidden = true;
   });
+  // 21-11-2026: con la app dentro, esta página no se puede mover. Si se movía (el iPhone la
+  // desplazaba al moverse la app), los toques caían más abajo de donde tocaba el dedo.
+  function aSuSitio() { if (window.scrollX || window.scrollY) window.scrollTo(0, 0); }
   function abrirDentro() {
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed"; document.body.style.inset = "0";
+    window.addEventListener("scroll", aSuSitio);
+    window.addEventListener("resize", aSuSitio);
+    if (window.visualViewport) { window.visualViewport.addEventListener("resize", aSuSitio); window.visualViewport.addEventListener("scroll", aSuSitio); }
     document.querySelector("main").hidden = true;
     document.getElementById("marco").hidden = false;
     document.getElementById("app").src = APP;
