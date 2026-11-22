@@ -48,8 +48,6 @@
   #archivo .compartir { background: #b91c1c; color: #fff; }
   #archivo a.desc { background: transparent; color: #b91c1c; border: 2px solid #b91c1c; }
   #archivo .cerrar { position: absolute; top: 6px; right: 6px; width: auto; background: none; color: #6b7280; padding: 4px 10px; margin: 0; font-size: 20px; }
-  #fuera { position: fixed; right: 8px; bottom: calc(6px + env(safe-area-inset-bottom)); font-size: 11px;
-           color: #6b7280; background: rgba(255,255,255,.85); padding: 3px 8px; border-radius: 8px; text-decoration: none; }
 </style>
 </head>
 <body>
@@ -69,7 +67,6 @@
   </div>
 </main>
 <div id="marco" hidden><iframe id="app" title="Panel BT" allow="camera; clipboard-write; web-share"></iframe>
-  <a id="fuera" href="#">¿No carga? Ábrela aquí</a>
   <div id="archivo" hidden>
     <button class="cerrar" id="archivo-cerrar" type="button" aria-label="Cerrar">✕</button>
     <p>📄 <b id="archivo-nombre"></b></p>
@@ -143,7 +140,6 @@
     document.getElementById("marco").hidden = false;
     document.getElementById("app").src = APP;
   }
-  document.getElementById("fuera").href = APP;
   document.getElementById("abrir").addEventListener("click", function (ev) { ev.preventDefault(); abrirDentro(); });
   if (instalada) abrirDentro();
 </script>
