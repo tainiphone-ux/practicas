@@ -95,23 +95,29 @@
     // 22-11-2026: abrir el Atajo «Panel BT Personal» o Chrome si desde dentro de Google no se deja (solo esas dos apps)
     if (d.tipo === "practicas-abrir-url" && /^(shortcuts:\/\/run-shortcut\?|googlechromes:\/\/)/.test(String(d.url || ""))) window.location.href = String(d.url);
     if (d.tipo === "practicas-archivo" && d.datos) mostrarArchivo(String(d.nombre || "documento.docx"), String(d.mime || ""), d.datos);
+    if (d.tipo === "practicas-archivos" && d.archivos && d.archivos.length) mostrarArchivos(d.archivos);
   });
   // 21-11-2026: la app (dentro de Google) no puede compartir ni descargar; manda aquí el Word.
-  var archivoActual = null, urlActual = "";
-  function mostrarArchivo(nombre, mime, datos) {
-    archivoActual = new File([datos], nombre, { type: mime || "application/octet-stream" });
+  var archivosActuales = [], urlActual = "";
+  function mostrarArchivo(nombre, mime, datos) { mostrarArchivos([{ nombre: nombre, mime: mime, datos: datos }]); }
+  // 22-11-2026: también varios a la vez (los dos partes de Horas Extras), para mandarlos juntos por WhatsApp
+  function mostrarArchivos(lista) {
+    archivosActuales = lista.map(function (a) { return new File([a.datos], String(a.nombre || "documento"), { type: String(a.mime || "application/octet-stream") }); });
     if (urlActual) URL.revokeObjectURL(urlActual);
-    urlActual = URL.createObjectURL(archivoActual);
-    document.getElementById("archivo-nombre").textContent = nombre;
+    urlActual = URL.createObjectURL(archivosActuales[0]);
+    document.getElementById("archivo-nombre").textContent = archivosActuales.map(function (f) { return f.name; }).join(" · ");
     var bajar = document.getElementById("archivo-bajar");
-    bajar.href = urlActual; bajar.download = nombre;
-    var puede = !!(navigator.canShare && navigator.canShare({ files: [archivoActual] }));
-    document.getElementById("archivo-compartir").hidden = !puede;
+    bajar.href = urlActual; bajar.download = archivosActuales[0].name;
+    bajar.textContent = archivosActuales.length > 1 ? "⬇️ Descargar el primero" : "⬇️ Descargar";
+    var puede = !!(navigator.canShare && navigator.canShare({ files: archivosActuales }));
+    var b = document.getElementById("archivo-compartir");
+    b.hidden = !puede;
+    b.textContent = archivosActuales.length > 1 ? "📤 Compartir los " + archivosActuales.length + " juntos" : "📤 Compartir o guardar";
     document.getElementById("archivo").hidden = false;
   }
   document.getElementById("archivo-compartir").addEventListener("click", function () {
-    if (!archivoActual) return;
-    navigator.share({ files: [archivoActual], title: archivoActual.name }).catch(function (e) {
+    if (!archivosActuales.length) return;
+    navigator.share({ files: archivosActuales }).catch(function (e) {
       if (e && e.name !== "AbortError") alert("No se ha podido compartir. Prueba con «Descargar».");
     });
   });
