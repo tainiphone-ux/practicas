@@ -78,6 +78,9 @@
   // de la app instalada, que no se borra (la de Google, dentro del iPhone, sí se borra).
   var CLAVE = "practicas_codigo";
   function leeCodigo() { try { return localStorage.getItem(CLAVE) || ""; } catch (e) { return ""; } }
+  var CLAVE_CRED = "practicas_credenciales";
+  function leeCred() { try { return localStorage.getItem(CLAVE_CRED) || ""; } catch (e) { return ""; } }
+  function guardaCred(t) { try { if (t) localStorage.setItem(CLAVE_CRED, t); else localStorage.removeItem(CLAVE_CRED); } catch (e) {} }
   function guardaCodigo(c) { try { if (c) localStorage.setItem(CLAVE, c); else localStorage.removeItem(CLAVE); } catch (e) {} }
   window.addEventListener("message", function (e) {
     if (!/^https:\/\/([a-z0-9-]+\.)*(googleusercontent\.com|script\.google\.com)$/.test(e.origin)) return;
@@ -85,6 +88,9 @@
     if (d.tipo === "practicas-pide-codigo" && e.source) e.source.postMessage({ tipo: "practicas-codigo", codigo: leeCodigo() }, e.origin);
     if (d.tipo === "practicas-guarda-codigo") guardaCodigo(String(d.codigo || ""));
     if (d.tipo === "practicas-borra-codigo") guardaCodigo("");
+    // 22-11-2026: usuario y contraseña de los correos (🔑 Credenciales): solo en este teléfono
+    if (d.tipo === "practicas-pide-credenciales" && e.source) e.source.postMessage({ tipo: "practicas-credenciales", datos: leeCred() }, e.origin);
+    if (d.tipo === "practicas-guarda-credenciales") guardaCred(String(d.datos || ""));
     if (d.tipo === "practicas-recolocar") recolocar();
     if (d.tipo === "practicas-archivo" && d.datos) mostrarArchivo(String(d.nombre || "documento.docx"), String(d.mime || ""), d.datos);
   });
