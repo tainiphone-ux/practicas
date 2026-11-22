@@ -92,6 +92,8 @@
     if (d.tipo === "practicas-pide-credenciales" && e.source) e.source.postMessage({ tipo: "practicas-credenciales", datos: leeCred() }, e.origin);
     if (d.tipo === "practicas-guarda-credenciales") guardaCred(String(d.datos || ""));
     if (d.tipo === "practicas-recolocar") recolocar();
+    // 22-11-2026: abrir el Atajo «Panel BT Personal» o Chrome si desde dentro de Google no se deja (solo esas dos apps)
+    if (d.tipo === "practicas-abrir-url" && /^(shortcuts:\/\/run-shortcut\?|googlechromes:\/\/)/.test(String(d.url || ""))) window.location.href = String(d.url);
     if (d.tipo === "practicas-archivo" && d.datos) mostrarArchivo(String(d.nombre || "documento.docx"), String(d.mime || ""), d.datos);
   });
   // 21-11-2026: la app (dentro de Google) no puede compartir ni descargar; manda aquí el Word.
