@@ -43,6 +43,8 @@
              background: #fff; color: #1f2937; border-radius: 16px; padding: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.35);
              max-width: 480px; margin: 0 auto; }
   #archivo p { margin: 0 24px 8px 0; font-size: 15px; word-break: break-word; }
+  #archivo-bajadas a { display: block; }
+  #archivo [hidden] { display: none !important; }   /* que «hidden» oculte de verdad los botones */
   #archivo button, #archivo a.desc { display: block; width: 100%; border: 0; border-radius: 12px; padding: 13px; font-size: 17px;
              font-weight: 600; text-align: center; text-decoration: none; margin-top: 6px; cursor: pointer; }
   #archivo .compartir { background: #b91c1c; color: #fff; }
@@ -71,7 +73,8 @@
     <button class="cerrar" id="archivo-cerrar" type="button" aria-label="Cerrar">✕</button>
     <p>📄 <b id="archivo-nombre"></b></p>
     <button class="compartir" id="archivo-compartir" type="button">📤 Compartir o guardar</button>
-    <a class="desc" id="archivo-bajar" href="#" download>⬇️ Descargar</a>
+    <div id="archivo-bajadas"></div>
+    <p id="archivo-consejo" hidden style="margin:8px 0 0;font-size:14px">Después, en WhatsApp: abre el chat, pulsa 📎 → <b>Documento</b> y elige el archivo (está en <b>Descargas</b>).</p>
   </div></div>
 <script>
   // Recordar el código: la app (dentro de Google) pide y guarda el código aquí, en la memoria
@@ -103,13 +106,23 @@
   // 22-11-2026: también varios a la vez (los dos partes de Horas Extras), para mandarlos juntos por WhatsApp
   function mostrarArchivos(lista) {
     archivosActuales = lista.map(function (a) { return new File([a.datos], String(a.nombre || "documento"), { type: String(a.mime || "application/octet-stream") }); });
-    if (urlActual) URL.revokeObjectURL(urlActual);
-    urlActual = URL.createObjectURL(archivosActuales[0]);
     document.getElementById("archivo-nombre").textContent = archivosActuales.map(function (f) { return f.name; }).join(" · ");
-    var bajar = document.getElementById("archivo-bajar");
-    bajar.href = urlActual; bajar.download = archivosActuales[0].name;
-    bajar.textContent = archivosActuales.length > 1 ? "⬇️ Descargar el primero" : "⬇️ Descargar";
-    var puede = !!(navigator.canShare && navigator.canShare({ files: archivosActuales }));
+    // un «Descargar» por archivo
+    var caja = document.getElementById("archivo-bajadas");
+    [].forEach.call(caja.querySelectorAll("a"), function (a) { URL.revokeObjectURL(a.href); });
+    caja.innerHTML = "";
+    archivosActuales.forEach(function (f) {
+      var a = document.createElement("a");
+      a.className = "desc"; a.href = URL.createObjectURL(f); a.download = f.name;
+      a.textContent = "⬇️ Descargar" + (archivosActuales.length > 1 ? " " + f.name : "");
+      caja.appendChild(a);
+    });
+    // 24-11-2026: Chrome en Android no deja compartir archivos Word desde una web (solo fotos, vídeos, PDF…):
+    // allí, «Descargar» y mandarlo desde WhatsApp (📎 → Documento).
+    var android = /Android/i.test(navigator.userAgent);
+    var soloWord = archivosActuales.every(function (f) { return /\.docx?$/i.test(f.name); });
+    var puede = !(android && soloWord) && !!(navigator.canShare && navigator.canShare({ files: archivosActuales }));
+    document.getElementById("archivo-consejo").hidden = puede;
     var b = document.getElementById("archivo-compartir");
     b.hidden = !puede;
     b.textContent = archivosActuales.length > 1 ? "📤 Compartir los " + archivosActuales.length + " juntos" : "📤 Compartir o guardar";
@@ -118,7 +131,7 @@
   document.getElementById("archivo-compartir").addEventListener("click", function () {
     if (!archivosActuales.length) return;
     navigator.share({ files: archivosActuales }).catch(function (e) {
-      if (e && e.name !== "AbortError") alert("No se ha podido compartir. Prueba con «Descargar».");
+      if (e && e.name !== "AbortError") { document.getElementById("archivo-compartir").hidden = true; document.getElementById("archivo-consejo").hidden = false; }
     });
   });
   document.getElementById("archivo-cerrar").addEventListener("click", function () {
