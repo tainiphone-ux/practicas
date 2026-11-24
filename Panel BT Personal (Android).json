@@ -1,0 +1,66 @@
+{
+ "version": 92,
+ "compatibilityVersion": 60,
+ "categories": [
+  {
+   "id": "903d5edb-d065-5145-be75-fc5d9df7e6b2",
+   "name": "Panel BT",
+   "layoutType": "linear_list",
+   "shortcuts": [
+    {
+     "id": "d55b5a39-f302-5284-8cca-4483cc2a1a35",
+     "name": "Panel BT Personal",
+     "description": "Lo abre Panel BT: saca la guardia de Gestión de Personal (solo lee).",
+     "executionType": "scripting",
+     "codeOnPrepare": "var WEB = 'https://personal.bomberostenerife.com';\nvar APP = 'https://script.google.com/macros/s/AKfycbxt4jty_VyTMWPDEZqn6YeqZDQ8mqUHIQAdEOfPxo6e1Z-ltxuT__KxGV8llBiEkzdg/exec';\nfunction v(k) { try { return String(getVariable(k) || ''); } catch (e) { return ''; } }\nfunction parar(m) { showDialog(m, 'Panel BT'); throw new Error(m); }\n\n// --- número y contraseña de Gestión de Personal: se piden la primera vez y se quedan en esta app\nvar usuario = v('pbt_usuario'), clave = v('pbt_clave');\nif (!usuario || !clave) {\n  usuario = prompt('Panel BT: tu número corporativo (el usuario de Gestión de Personal). Solo se pide la primera vez.', usuario) || '';\n  if (!usuario) parar('Sin número no puedo entrar en Gestión de Personal.');\n  clave = promptPassword('Panel BT: tu contraseña de Gestión de Personal. Se guarda solo en este móvil.') || '';\n  if (!clave) parar('Sin contraseña no puedo entrar en Gestión de Personal.');\n  setVariable('pbt_usuario', usuario.trim());\n  setVariable('pbt_clave', clave);\n}\nvar codigo = v('pbt_codigo'), consultas = [];\ntry { consultas = JSON.parse(v('pbt_consultas') || '[]'); } catch (e) {}\nif (!codigo || !consultas.length) parar('Esto se abre desde Panel BT: botón «🌐 De Gestión de Personal».');\n\n// --- cookies a mano (sendHttpRequest no las guarda)\nvar jar = {};\nfunction cogerCookies(r) {\n  if (!r || !r.response) return;\n  var h = r.response.headers || {};\n  for (var k in h) {\n    if (String(k).toLowerCase() !== 'set-cookie') continue;\n    var lista = Array.isArray(h[k]) ? h[k] : [h[k]];\n    for (var i = 0; i < lista.length; i++) {\n      var par = String(lista[i]).split(';')[0], j = par.indexOf('=');\n      if (j > 0) jar[par.slice(0, j).trim()] = par.slice(j + 1).trim();\n    }\n  }\n}\nfunction cookies() { var s = []; for (var k in jar) s.push(k + '=' + jar[k]); return s.join('; '); }\nfunction pedir(url, form, seguir) {\n  var op = { method: form ? 'POST' : 'GET', headers: { 'Cookie': cookies() }, charset: 'ISO-8859-1', followRedirects: !!seguir };\n  if (form) op.formData = form;\n  var r = sendHttpRequest(url, op);\n  if (r.status === 'networkError')\n    parar('No llego a Gestión de Personal. Pon la VPN (o el wifi del trabajo) y vuelve a pulsar el botón en Panel BT.');\n  cogerCookies(r);\n  var cuerpo = (r.response && r.response.body) || '';\n  // si redirige, se sigue a mano para no perder las cookies\n  var cod = r.response ? r.response.statusCode : 0, h = (r.response && r.response.headers) || {}, loc = '';\n  for (var k in h) if (String(k).toLowerCase() === 'location') loc = String(Array.isArray(h[k]) ? h[k][0] : h[k]);\n  if (cod >= 300 && cod < 400 && loc) {\n    if (!/^https?:/.test(loc)) loc = loc.charAt(0) === '/' ? WEB + loc : url.replace(/[?#].*$/, '').replace(/[^\\/]*$/, '') + loc;\n    return pedir(loc, null, false);\n  }\n  return cuerpo;\n}\n// la página viene leída letra a letra (ISO-8859-1); si en realidad es UTF-8, se arregla\nfunction texto(s) {\n  var m = /charset=[\"']?([\\w-]+)/i.exec(s.slice(0, 3000));\n  if (!m || /^utf/i.test(m[1])) { try { return decodeURIComponent(escape(s)); } catch (e) {} }\n  return s;\n}\n\n// 1. entrar\npedir(WEB + '/');\npedir(WEB + '/index2.php', { user: usuario, pass: clave, hd_sended: '1' });\n// 2. «Gestión de Asistencia Diaria» y su «sesion»\nvar form = pedir(WEB + '/usuarios/gDiario-guardia.php');\nif (form.indexOf('sel_parque') < 0) {\n  if (confirm('Gestión de Personal no me ha dejado entrar. ¿Borro el número y la contraseña guardados para escribirlos otra vez la próxima vez?')) {\n    setVariable('pbt_usuario', ''); setVariable('pbt_clave', '');\n  }\n  parar('No he podido entrar en Gestión de Personal. Mira el número y la contraseña, y que tengas la VPN o el wifi del trabajo.');\n}\nvar ms = /name=\"sesion\"[^>]*value=\"(\\d*)\"|value=\"(\\d*)\"[^>]*name=\"sesion\"/i.exec(form);\nvar sesion = ms ? (ms[1] || ms[2] || '') : '';\n// 3. una tabla por parque y día\nvar tablas = [];\nfor (var i = 0; i < consultas.length; i++) {\n  var q = consultas[i];\n  var html = texto(pedir(WEB + '/usuarios/functions/tabla-diario.php?aleatorio=4815162342',\n                         { fecha: q.fecha, fecha_f: q.fecha, sel_parque: q.sel, sesion: sesion }));\n  tablas.push({ parque: q.parque, fecha: q.fecha, opcion: q.opcion, html: html });\n}\n// 4. quitar la VPN y mandarlo a Panel BT\nshowDialog('Ya tengo la guardia de Gestión de Personal. Si estás con la VPN, desconéctala ahora (para que llegue a Panel BT) y pulsa OK. En el wifi del trabajo, pulsa OK sin más.', 'Panel BT');\nvar fallos = [];\nfor (var i = 0; i < tablas.length; i++) {\n  var t = tablas[i], ok = false;\n  for (var intento = 0; intento < 2 && !ok; intento++) {\n    var r = sendHttpRequest(APP, { method: 'POST', headers: { 'Content-Type': 'application/json' }, followRedirects: true,\n      body: JSON.stringify({ accion: 'subir_diario', codigo: codigo, parque: t.parque, fecha: t.fecha, opcion: t.opcion, html: t.html }) });\n    ok = r.status === 'success' && /\"ok\"\\s*:\\s*true/.test((r.response && r.response.body) || '');\n  }\n  if (!ok) fallos.push(t.parque + ' ' + t.fecha);\n}\nif (fallos.length) showDialog('No he podido mandar a Panel BT: ' + fallos.join(', ') + '. ¿Sigue puesta la VPN? Quítala y vuelve a pulsar el botón en Panel BT.', 'Panel BT');\nelse showDialog('Listo: vuelve a Panel BT.', 'Panel BT');"
+    }
+   ]
+  }
+ ],
+ "variables": [
+  {
+   "id": "d2af7454-cd20-5135-8a54-68362bcbad64",
+   "key": "pbt_usuario",
+   "type": "constant",
+   "value": "",
+   "title": "Número corporativo (Gestión de Personal)",
+   "isSecret": true,
+   "isExcludeValueFromExport": true,
+   "urlEncode": false,
+   "jsonEncode": false
+  },
+  {
+   "id": "c8f7d7ec-dfbf-57c0-9b44-0721c4d2a4e4",
+   "key": "pbt_clave",
+   "type": "constant",
+   "value": "",
+   "title": "Contraseña de Gestión de Personal",
+   "isSecret": true,
+   "isExcludeValueFromExport": true,
+   "urlEncode": false,
+   "jsonEncode": false
+  },
+  {
+   "id": "58a01439-6aac-5698-b8d5-af1b63b7bba2",
+   "key": "pbt_codigo",
+   "type": "constant",
+   "value": "",
+   "title": "Código de Panel BT (lo pone la app)",
+   "isSecret": false,
+   "isExcludeValueFromExport": false,
+   "urlEncode": false,
+   "jsonEncode": false
+  },
+  {
+   "id": "d6175b6d-64d9-555c-ba7c-8d29db56b46c",
+   "key": "pbt_consultas",
+   "type": "constant",
+   "value": "",
+   "title": "Parques y días (lo pone la app)",
+   "isSecret": false,
+   "isExcludeValueFromExport": false,
+   "urlEncode": false,
+   "jsonEncode": false
+  }
+ ]
+}

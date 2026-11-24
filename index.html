@@ -95,8 +95,8 @@
     if (d.tipo === "practicas-pide-credenciales" && e.source) e.source.postMessage({ tipo: "practicas-credenciales", datos: leeCred() }, e.origin);
     if (d.tipo === "practicas-guarda-credenciales") guardaCred(String(d.datos || ""));
     if (d.tipo === "practicas-recolocar") recolocar();
-    // 22-11-2026: abrir el Atajo «Panel BT Personal» o Chrome si desde dentro de Google no se deja (solo esas dos apps)
-    if (d.tipo === "practicas-abrir-url" && /^(shortcuts:\/\/run-shortcut\?|googlechromes:\/\/)/.test(String(d.url || ""))) window.location.href = String(d.url);
+    // 22-11-2026: abrir el Atajo «Panel BT Personal» (iPhone o HTTP Shortcuts en Android) o Chrome si desde dentro de Google no se deja (solo esas dos apps)
+    if (d.tipo === "practicas-abrir-url" && /^(shortcuts:\/\/run-shortcut\?|googlechromes:\/\/|intent:\/\/deep-link\/Panel%20BT%20Personal\?[^#]*#Intent;scheme=http-shortcuts;package=ch\.rmy\.android\.http_shortcuts;end$)/.test(String(d.url || ""))) window.location.href = String(d.url);
     if (d.tipo === "practicas-archivo" && d.datos) mostrarArchivo(String(d.nombre || "documento.docx"), String(d.mime || ""), d.datos);
     if (d.tipo === "practicas-archivos" && d.archivos && d.archivos.length) mostrarArchivos(d.archivos);
   });
