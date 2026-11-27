@@ -125,12 +125,23 @@
     document.getElementById("archivo-consejo").hidden = puede;
     var b = document.getElementById("archivo-compartir");
     b.hidden = !puede;
-    b.textContent = archivosActuales.length > 1 ? "📤 Compartir los " + archivosActuales.length + " juntos" : "📤 Compartir o guardar";
+    siguiente = 0; rotuloCompartir();
     document.getElementById("archivo").hidden = false;
+  }
+  // 27-11-2026 (Valentín): WhatsApp en el iPhone solo coge el primero si van juntos → se mandan uno tras otro
+  var siguiente = 0;
+  function rotuloCompartir() {
+    var b = document.getElementById("archivo-compartir"), n = archivosActuales.length;
+    if (n < 2) { b.textContent = "📤 Compartir o guardar"; return; }
+    b.textContent = siguiente < n
+      ? "📤 Compartir " + (siguiente + 1) + " de " + n + ": " + archivosActuales[siguiente].name.replace(/\.docx$/i, "")
+      : "✅ Enviados los " + n + " (toca para empezar otra vez)";
   }
   document.getElementById("archivo-compartir").addEventListener("click", function () {
     if (!archivosActuales.length) return;
-    navigator.share({ files: archivosActuales }).catch(function (e) {
+    if (siguiente >= archivosActuales.length) siguiente = 0;
+    var uno = archivosActuales.length > 1 ? [archivosActuales[siguiente]] : archivosActuales;
+    navigator.share({ files: uno }).then(function () { siguiente++; rotuloCompartir(); }).catch(function (e) {
       if (e && e.name !== "AbortError") { document.getElementById("archivo-compartir").hidden = true; document.getElementById("archivo-consejo").hidden = false; }
     });
   });
